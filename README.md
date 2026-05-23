@@ -31,57 +31,9 @@ python -m http.server 8080
 > **Important:** Always serve over HTTP, not `file://`.  
 > ES Modules and MediaPipe require an HTTP origin.
 
----
-
-## Deploying to Vercel (free, ~2 minutes)
-
-Vercel hosts static sites for free and serves `.js` modules with the correct
-`Content-Type`, which fixes the model + MediaPipe issues that GitHub Pages has.
-
-### Step 1 — Install Vercel CLI (one-time)
-
-```bash
-npm install -g vercel
-```
-
-### Step 2 — Deploy
-
-```bash
-cd sv_v6
-vercel
-```
-
-Follow the prompts:
-- Set up and deploy? **Y**
-- Which scope? *(your account)*
-- Link to existing project? **N**
-- Project name: **signvision** (or anything you like)
-- In which directory is your code located? **.** (current directory)
-- Want to modify settings? **N**
-
-Vercel will print a URL like `https://signvision-xxxx.vercel.app` — that's your live site.
-
-### Step 3 — Redeploy after changes
-
-```bash
-vercel --prod
-```
-
-### Alternative: Deploy via GitHub
-
-1. Push `sv_v6` to a GitHub repo.
-2. Go to [vercel.com](https://vercel.com), click **Add New Project**.
-3. Import the repo. Leave all settings as default and click **Deploy**.
 
 ---
 
-## Why GitHub Pages doesn't work
-
-GitHub Pages serves `.js` files as `text/plain` on some paths, which causes browsers
-to reject ES Module imports. It also has no way to set custom headers for `Content-Type`.
-Vercel always serves `.js` as `application/javascript`, so modules and MediaPipe load correctly.
-
----
 
 ## Project structure
 
@@ -116,12 +68,4 @@ sv_v6/
 
 ---
 
-## Regenerating model weights
 
-If you retrain the model:
-
-```bash
-python scripts/extract_weights.py
-```
-
-This overwrites `src/utils/model_weights.js` — no other changes needed.
