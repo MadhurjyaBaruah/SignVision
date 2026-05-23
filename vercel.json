@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/src/(.*)\\.js$",
+      "headers": { "Content-Type": "application/javascript; charset=utf-8" },
+      "dest": "/src/$1.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
