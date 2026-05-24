@@ -1,10 +1,12 @@
 /**
- * translate.js — SignVision v5
+ * translate.js — SignVision v6
  * Language Translation, Auto-Correct & TTS
  *
- * Key fix: speakText() now uses a comprehensive BCP-47 locale map,
- * gracefully falls back when a language has no installed voice,
- * and shows a visible warning instead of silently failing.
+ * Translation engine: Google Translate (unofficial client=gtx endpoint)
+ * — No API key required
+ * — Excellent Indian language support (Hindi, Bengali, Tamil, Telugu,
+ *   Marathi, Gujarati, Kannada, Malayalam, Punjabi, Odia, Assamese, etc.)
+ * — Source is always English (en)
  */
 
 // ── Auto-correct dictionary ───────────────────────────────────
@@ -90,105 +92,163 @@ export function suggestCorrection(text) {
   return corrected !== text ? corrected : null;
 }
 
+// ── Google Translate language code map ───────────────────────
+// Maps our dropdown values → Google Translate language codes.
+// Google uses slightly different codes for some languages.
+const GOOGLE_LANG_MAP = {
+  'as':    'as',    // Assamese
+  'af':    'af',    // Afrikaans
+  'ar':    'ar',    // Arabic
+  'bn':    'bn',    // Bengali
+  'zh-CN': 'zh-CN', // Chinese Simplified
+  'zh-TW': 'zh-TW', // Chinese Traditional
+  'cs':    'cs',    // Czech
+  'da':    'da',    // Danish
+  'nl':    'nl',    // Dutch
+  'fil':   'tl',    // Filipino → Tagalog (Google code)
+  'fi':    'fi',    // Finnish
+  'fr':    'fr',    // French
+  'de':    'de',    // German
+  'el':    'el',    // Greek
+  'gu':    'gu',    // Gujarati
+  'he':    'iw',    // Hebrew → Google uses 'iw'
+  'hi':    'hi',    // Hindi
+  'hu':    'hu',    // Hungarian
+  'id':    'id',    // Indonesian
+  'it':    'it',    // Italian
+  'ja':    'ja',    // Japanese
+  'kn':    'kn',    // Kannada
+  'ko':    'ko',    // Korean
+  'la':    'la',    // Latin
+  'ml':    'ml',    // Malayalam
+  'ms':    'ms',    // Malay
+  'mr':    'mr',    // Marathi
+  'mni-Mtei': 'mni-Mtei', // Meitei (Manipuri)
+  'ne':    'ne',    // Nepali
+  'no':    'no',    // Norwegian
+  'or':    'or',    // Odia
+  'fa':    'fa',    // Persian
+  'pl':    'pl',    // Polish
+  'pt':    'pt',    // Portuguese
+  'pa':    'pa',    // Punjabi
+  'ro':    'ro',    // Romanian
+  'ru':    'ru',    // Russian
+  'sa':    'sa',    // Sanskrit
+  'es':    'es',    // Spanish
+  'sw':    'sw',    // Swahili
+  'sv':    'sv',    // Swedish
+  'ta':    'ta',    // Tamil
+  'te':    'te',    // Telugu
+  'th':    'th',    // Thai
+  'tr':    'tr',    // Turkish
+  'uk':    'uk',    // Ukrainian
+  'ur':    'ur',    // Urdu
+  'vi':    'vi',    // Vietnamese
+};
+
 /**
- * translateText(text, sourceLang, targetLang)
- * Calls MyMemory free translation API.
+ * translateText(text, targetLang)
+ * Uses Google Translate unofficial API (client=gtx).
+ * Source is always English.
+ * Returns { translation: string }
  */
-export async function translateText(text, sourceLang, targetLang) {
+export async function translateText(text, targetLang) {
   if (!text || !text.trim()) throw new Error('No text to translate');
   if (text.length > 5000) throw new Error('Text exceeds 5000 character limit');
 
-  const src = sourceLang === 'auto' ? 'en' : sourceLang;
-  if (src === targetLang) return { translation: text };
+  const tgt = GOOGLE_LANG_MAP[targetLang] || targetLang;
+  if (tgt === 'en') return { translation: text };
 
-  const encoded  = encodeURIComponent(text.trim());
-  const langPair = `${src}|${targetLang}`;
-  const url      = `https://api.mymemory.translated.net/get?q=${encoded}&langpair=${langPair}`;
+  const encoded = encodeURIComponent(text.trim());
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tgt}&dt=t&q=${encoded}`;
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Translation service returned ${res.status}`);
-
-  const data = await res.json();
-  if (data.responseStatus !== 200) {
-    const msg = data.responseDetails || 'Translation failed';
-    throw new Error(
-      msg.includes('MYMEMORY WARNING')
-        ? 'Daily translation limit reached. Please try again tomorrow.'
-        : msg
-    );
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (networkErr) {
+    throw new Error('Network error — please check your connection.');
   }
 
-  const translation = data.responseData?.translatedText;
-  if (!translation) throw new Error('Empty translation response');
+  if (!res.ok) {
+    throw new Error(`Translation service returned ${res.status}. Please try again.`);
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error('Unexpected response from translation service.');
+  }
+
+  // Google's response: [ [[translatedChunk, originalChunk, ...], ...], ..., sourceLang ]
+  if (!Array.isArray(data) || !Array.isArray(data[0])) {
+    throw new Error('Unexpected response format from Google Translate.');
+  }
+
+  // Each element of data[0] is [translated_segment, original_segment, ...]
+  const translation = data[0]
+    .filter(seg => Array.isArray(seg) && seg[0])
+    .map(seg => seg[0])
+    .join('');
+
+  if (!translation) throw new Error('Empty translation response. Please try again.');
   return { translation };
 }
 
-// ── BCP-47 locale map ─────────────────────────────────────────
-// Maps our dropdown values → full BCP-47 tags that browsers recognise.
-// Languages with no reliable browser TTS voice are marked with
-// preferredFallback so we can warn the user gracefully.
+// ── BCP-47 locale map for TTS ─────────────────────────────────
 const LANG_LOCALE_MAP = {
-  'en':    { locale: 'en-US',  name: 'English' },
-  'hi':    { locale: 'hi-IN',  name: 'Hindi' },
-  'es':    { locale: 'es-ES',  name: 'Spanish' },
-  'fr':    { locale: 'fr-FR',  name: 'French' },
-  'de':    { locale: 'de-DE',  name: 'German' },
-  'it':    { locale: 'it-IT',  name: 'Italian' },
-  'pt':    { locale: 'pt-PT',  name: 'Portuguese' },
-  'ru':    { locale: 'ru-RU',  name: 'Russian' },
-  'ja':    { locale: 'ja-JP',  name: 'Japanese' },
-  'ko':    { locale: 'ko-KR',  name: 'Korean' },
+  'as':    { locale: 'as-IN',  name: 'Assamese',             fallback: 'hi-IN', noNativeVoice: true },
+  'af':    { locale: 'af-ZA',  name: 'Afrikaans' },
+  'ar':    { locale: 'ar-SA',  name: 'Arabic' },
+  'bn':    { locale: 'bn-IN',  name: 'Bengali',              fallback: 'hi-IN' },
   'zh-CN': { locale: 'zh-CN',  name: 'Chinese (Simplified)' },
   'zh-TW': { locale: 'zh-TW',  name: 'Chinese (Traditional)' },
-  'ar':    { locale: 'ar-SA',  name: 'Arabic' },
-  'bn':    { locale: 'bn-IN',  name: 'Bengali', fallback: 'hi-IN' },
-  'ta':    { locale: 'ta-IN',  name: 'Tamil',   fallback: 'hi-IN' },
-  'te':    { locale: 'te-IN',  name: 'Telugu',  fallback: 'hi-IN' },
-  'mr':    { locale: 'mr-IN',  name: 'Marathi', fallback: 'hi-IN' },
-  'gu':    { locale: 'gu-IN',  name: 'Gujarati',fallback: 'hi-IN' },
-  'kn':    { locale: 'kn-IN',  name: 'Kannada', fallback: 'hi-IN' },
-  'ml':    { locale: 'ml-IN',  name: 'Malayalam',fallback: 'hi-IN' },
-  'pa':    { locale: 'pa-IN',  name: 'Punjabi', fallback: 'hi-IN' },
-  'ur':    { locale: 'ur-PK',  name: 'Urdu',    fallback: 'ar-SA' },
-  'ne':    { locale: 'ne-NP',  name: 'Nepali',  fallback: 'hi-IN' },
-  'th':    { locale: 'th-TH',  name: 'Thai' },
-  'vi':    { locale: 'vi-VN',  name: 'Vietnamese' },
-  'id':    { locale: 'id-ID',  name: 'Indonesian' },
-  'ms':    { locale: 'ms-MY',  name: 'Malay',   fallback: 'id-ID' },
-  'tr':    { locale: 'tr-TR',  name: 'Turkish' },
-  'pl':    { locale: 'pl-PL',  name: 'Polish' },
-  'nl':    { locale: 'nl-NL',  name: 'Dutch' },
-  'sv':    { locale: 'sv-SE',  name: 'Swedish' },
-  'da':    { locale: 'da-DK',  name: 'Danish' },
-  'no':    { locale: 'nb-NO',  name: 'Norwegian' },
-  'fi':    { locale: 'fi-FI',  name: 'Finnish' },
-  'el':    { locale: 'el-GR',  name: 'Greek' },
   'cs':    { locale: 'cs-CZ',  name: 'Czech' },
-  'ro':    { locale: 'ro-RO',  name: 'Romanian' },
-  'hu':    { locale: 'hu-HU',  name: 'Hungarian' },
-  'uk':    { locale: 'uk-UA',  name: 'Ukrainian', fallback: 'ru-RU' },
+  'da':    { locale: 'da-DK',  name: 'Danish' },
+  'nl':    { locale: 'nl-NL',  name: 'Dutch' },
+  'fil':   { locale: 'fil-PH', name: 'Filipino',             fallback: 'en-US' },
+  'fi':    { locale: 'fi-FI',  name: 'Finnish' },
+  'fr':    { locale: 'fr-FR',  name: 'French' },
+  'de':    { locale: 'de-DE',  name: 'German' },
+  'el':    { locale: 'el-GR',  name: 'Greek' },
+  'gu':    { locale: 'gu-IN',  name: 'Gujarati',             fallback: 'hi-IN' },
   'he':    { locale: 'he-IL',  name: 'Hebrew' },
-  'fa':    { locale: 'fa-IR',  name: 'Persian',  fallback: 'ar-SA' },
-  'sw':    { locale: 'sw-KE',  name: 'Swahili',  fallback: 'en-US' },
-  'af':    { locale: 'af-ZA',  name: 'Afrikaans' },
-  'fil':   { locale: 'fil-PH', name: 'Filipino', fallback: 'en-US' },
-  'la':    { locale: 'la',     name: 'Latin',    fallback: 'it-IT' },
-  // Assamese — no browser TTS engine ships this voice.
-  // We speak the translated text using Hindi voice (closest Indic voice)
-  // and inform the user.
-  'as':    { locale: 'as-IN',  name: 'Assamese', fallback: 'hi-IN', noNativeVoice: true },
+  'hi':    { locale: 'hi-IN',  name: 'Hindi' },
+  'hu':    { locale: 'hu-HU',  name: 'Hungarian' },
+  'id':    { locale: 'id-ID',  name: 'Indonesian' },
+  'it':    { locale: 'it-IT',  name: 'Italian' },
+  'ja':    { locale: 'ja-JP',  name: 'Japanese' },
+  'kn':    { locale: 'kn-IN',  name: 'Kannada',              fallback: 'hi-IN' },
+  'ko':    { locale: 'ko-KR',  name: 'Korean' },
+  'la':    { locale: 'la',     name: 'Latin',                fallback: 'it-IT' },
+  'ml':    { locale: 'ml-IN',  name: 'Malayalam',            fallback: 'hi-IN' },
+  'ms':    { locale: 'ms-MY',  name: 'Malay',                fallback: 'id-ID' },
+  'mr':    { locale: 'mr-IN',  name: 'Marathi',              fallback: 'hi-IN' },
+  'mni-Mtei': { locale: 'mni-IN', name: 'Meitei (Manipuri)', fallback: 'hi-IN', noNativeVoice: true },
+  'ne':    { locale: 'ne-NP',  name: 'Nepali',               fallback: 'hi-IN' },
+  'no':    { locale: 'nb-NO',  name: 'Norwegian' },
+  'or':    { locale: 'or-IN',  name: 'Odia',                 fallback: 'hi-IN', noNativeVoice: true },
+  'fa':    { locale: 'fa-IR',  name: 'Persian',              fallback: 'ar-SA' },
+  'pl':    { locale: 'pl-PL',  name: 'Polish' },
+  'pt':    { locale: 'pt-PT',  name: 'Portuguese' },
+  'pa':    { locale: 'pa-IN',  name: 'Punjabi',              fallback: 'hi-IN' },
+  'ro':    { locale: 'ro-RO',  name: 'Romanian' },
+  'ru':    { locale: 'ru-RU',  name: 'Russian' },
+  'sa':    { locale: 'sa-IN',  name: 'Sanskrit',             fallback: 'hi-IN', noNativeVoice: true },
+  'es':    { locale: 'es-ES',  name: 'Spanish' },
+  'sw':    { locale: 'sw-KE',  name: 'Swahili',              fallback: 'en-US' },
+  'sv':    { locale: 'sv-SE',  name: 'Swedish' },
+  'ta':    { locale: 'ta-IN',  name: 'Tamil',                fallback: 'hi-IN' },
+  'te':    { locale: 'te-IN',  name: 'Telugu',               fallback: 'hi-IN' },
+  'th':    { locale: 'th-TH',  name: 'Thai' },
+  'tr':    { locale: 'tr-TR',  name: 'Turkish' },
+  'uk':    { locale: 'uk-UA',  name: 'Ukrainian',            fallback: 'ru-RU' },
+  'ur':    { locale: 'ur-PK',  name: 'Urdu',                 fallback: 'ar-SA' },
+  'vi':    { locale: 'vi-VN',  name: 'Vietnamese' },
 };
 
 /**
  * getVoiceForLang(langCode)
- * Returns { voice, locale, usedFallback, langName } or null if TTS unavailable.
- *
- * Strategy (in order):
- *  1. Exact locale match (e.g. "hi-IN")
- *  2. Language prefix match (e.g. "hi")
- *  3. Defined fallback locale (e.g. "hi-IN" for Assamese)
- *  4. English fallback
- *  5. Any available voice
  */
 function getVoiceForLang(langCode) {
   const voices  = window.speechSynthesis?.getVoices() || [];
@@ -197,40 +257,29 @@ function getVoiceForLang(langCode) {
 
   function findVoice(tag) {
     if (!tag) return null;
-    const primary  = tag.split('-')[0].toLowerCase();
+    const primary = tag.split('-')[0].toLowerCase();
     return voices.find(v => v.lang.toLowerCase() === tag.toLowerCase())
         || voices.find(v => v.lang.toLowerCase().startsWith(primary));
   }
 
-  // 1. Try exact locale
   let voice = findVoice(locale);
   if (voice) return { voice, locale, usedFallback: false, langName: name };
 
-  // 2. Try defined fallback
   if (fallback) {
     voice = findVoice(fallback);
     if (voice) return { voice, locale: fallback, usedFallback: true, langName: name };
   }
 
-  // 3. English
   voice = findVoice('en-US') || findVoice('en');
   if (voice) return { voice, locale: 'en-US', usedFallback: true, langName: name };
 
-  // 4. Any voice at all
   if (voices.length) return { voice: voices[0], locale: voices[0].lang, usedFallback: true, langName: name };
 
   return null;
 }
 
 /**
- * speakText(text, langCode, onFallbackWarning?)
- *
- * Speaks text in the best available voice for langCode.
- *
- * @param {string}   text
- * @param {string}   langCode    — dropdown value (e.g. 'as', 'hi', 'es')
- * @param {function} [onWarning] — called with a message if a fallback voice is used
- *                                 or if TTS is completely unavailable.
+ * speakText(text, langCode, onWarning?)
  */
 export function speakText(text, langCode = 'en', onWarning = null) {
   if (!window.speechSynthesis) {
@@ -241,7 +290,6 @@ export function speakText(text, langCode = 'en', onWarning = null) {
 
   window.speechSynthesis.cancel();
 
-  // Voices may not be loaded yet — retry once after short delay
   function doSpeak() {
     const result = getVoiceForLang(langCode);
 
@@ -253,16 +301,15 @@ export function speakText(text, langCode = 'en', onWarning = null) {
     const { voice, usedFallback, langName } = result;
     const entry = LANG_LOCALE_MAP[langCode];
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = voice;
-    utterance.lang  = voice.lang;
-    utterance.rate  = 0.90;
-    utterance.pitch = 1.0;
+    const utterance    = new SpeechSynthesisUtterance(text);
+    utterance.voice    = voice;
+    utterance.lang     = voice.lang;
+    utterance.rate     = 0.90;
+    utterance.pitch    = 1.0;
 
-    // Warn when using fallback (especially for Assamese + other Indic scripts)
     if (usedFallback && onWarning) {
       if (entry?.noNativeVoice) {
-        onWarning(`"${langName}" voice is not available in your browser. Speaking with the closest available voice. For best results install ${langName} TTS in your OS language settings.`);
+        onWarning(`"${langName}" voice is not available in your browser. Speaking with the closest available voice. Install ${langName} TTS in your OS settings for best results.`);
       } else {
         onWarning(`"${langName}" voice not found on this device. Using closest available voice.`);
       }
@@ -271,15 +318,12 @@ export function speakText(text, langCode = 'en', onWarning = null) {
     window.speechSynthesis.speak(utterance);
   }
 
-  // If voices aren't loaded yet, wait for them
   const voices = window.speechSynthesis.getVoices();
   if (voices.length === 0) {
-    // One-shot listener — fires once voices load
     window.speechSynthesis.onvoiceschanged = () => {
       window.speechSynthesis.onvoiceschanged = null;
       doSpeak();
     };
-    // Also try after 300ms in case onvoiceschanged doesn't fire (some browsers)
     setTimeout(doSpeak, 300);
   } else {
     doSpeak();
@@ -287,14 +331,13 @@ export function speakText(text, langCode = 'en', onWarning = null) {
 }
 
 /**
- * initVoices()
- * Call once at app start to pre-warm the voice list.
+ * initVoices() — call at app start to pre-warm the voice list.
  */
 export function initVoices() {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged = () => {
     window.speechSynthesis.onvoiceschanged = null;
-    window.speechSynthesis.getVoices(); // cache them
+    window.speechSynthesis.getVoices();
   };
 }
