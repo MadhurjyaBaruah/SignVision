@@ -381,7 +381,6 @@ export function initTranslatorPage() {
   const translateLoading   = document.getElementById('translateLoading');
   const correctionBar      = document.getElementById('correctionBar');
   const correctionSuggEl   = document.getElementById('correctionSuggestion');
-  const sourceLang         = document.getElementById('sourceLang');
   const targetLang         = document.getElementById('targetLang');
   let currentTranslation   = '';
 
@@ -445,49 +444,28 @@ export function initTranslatorPage() {
     currentTranslation             = '';
   });
 
-  // Speak source text
+  // Speak source text (always English)
   document.getElementById('btnSpeakSource').addEventListener('click', () => {
     const text = translateInput.value.trim();
     if (!text) return;
-    const lang = sourceLang.value === 'auto' ? 'en' : sourceLang.value;
-    speakText(text, lang, showTtsWarning);
+    speakText(text, 'en', showTtsWarning);
   });
 
-  // Swap languages
-  document.getElementById('btnSwapLangs').addEventListener('click', () => {
-    const srcVal = sourceLang.value;
-    const tgtVal = targetLang.value;
-    if (srcVal === 'auto') return;
-    const srcOpts = [...sourceLang.options].map(o => o.value);
-    const tgtOpts = [...targetLang.options].map(o => o.value);
-    if (srcOpts.includes(tgtVal) && tgtOpts.includes(srcVal)) {
-      sourceLang.value = tgtVal;
-      targetLang.value = srcVal;
-      if (currentTranslation) {
-        const oldInput       = translateInput.value;
-        translateInput.value = currentTranslation;
-        translateCharCount.textContent = currentTranslation.length;
-        translateOutput.textContent    = oldInput;
-        currentTranslation             = oldInput;
-      }
-    }
-  });
+  // Swap button removed — source is always English
 
-  // Translate
+  // Translate (always from English)
   async function doTranslate() {
     const text = translateInput.value.trim();
     if (!text) {
       translateOutput.innerHTML = '<span class="translate-output-placeholder">Enter some text first…</span>';
       return;
     }
-    const src = sourceLang.value === 'auto' ? 'en' : sourceLang.value;
     const tgt = targetLang.value;
-    if (src === tgt) { translateOutput.textContent = text; currentTranslation = text; return; }
 
     translateLoading.style.display = 'flex';
     translateOutput.style.opacity  = '0.3';
     try {
-      const { translation } = await translateText(text, src, tgt);
+      const { translation } = await translateText(text, tgt);
       currentTranslation            = translation;
       translateOutput.textContent   = translation;
       translateOutput.style.opacity = '0';
