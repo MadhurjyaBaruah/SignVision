@@ -44,13 +44,6 @@ python -m http.server 8080
 # Open http://localhost:8080
 ```
 
-## Why GitHub Pages does not work
-
-GitHub Pages serves `.js` files as `text/plain` on some paths, which causes browsers
-to reject ES Module imports. Vercel always serves `.js` as `application/javascript`.
-
----
-
 ## Project structure
 
 ```
