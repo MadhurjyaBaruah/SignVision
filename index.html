@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <meta name="description" content="SignVision — Real-time American Sign Language recognition in your browser. Powered by a trained neural network and MediaPipe hand tracking."/>
+  <meta name="description" content="SignVision - Real-time American Sign Language recognition in your browser. Powered by a trained neural network and MediaPipe hand tracking."/>
   <meta name="theme-color" content="#080c12"/>
-  <link rel="canonical" href="https://signvision.vercel.app/"/>
-  <title>SignVision v6 - Real-Time ASL Recognition</title>
+  <link rel="canonical" href="https://signvision-asl.vercel.app/"/>
+  <title>SignVision v7 - Real-Time ASL Recognition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -15,25 +15,20 @@
 </head>
 <body>
 
-<!-- ═══ NAV ═══ -->
+<!-- NAV -->
 <nav class="nav">
   <div class="nav-inner">
-
-    <!-- Logo: PNG image + two-colour brand name -->
     <div class="nav-logo" data-page="home">
       <img class="nav-logo-img" src="assets/sv-logo.png" alt="SignVision logo" width="36" height="36"/>
       <span class="nav-logo-text">
         <span class="logo-sign">Sign</span><span class="logo-vision">Vision</span>
       </span>
     </div>
-
     <div class="nav-links">
       <div class="nav-link" data-page="translator">Translator</div>
-      <div class="nav-link" data-page="learn">Learn A–Z</div>
+      <div class="nav-link" data-page="learn">Learn A-Z</div>
     </div>
-
     <div class="nav-right">
-      <!-- Dark / Light toggle -->
       <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle dark/light mode">
         <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
@@ -51,22 +46,20 @@
         Start Translating
       </button>
     </div>
-
     <button class="hamburger" id="hamburger" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
   </div>
-
   <div class="mobile-menu" id="mobileMenu">
     <div class="mobile-link" data-page="home">Home</div>
     <div class="mobile-link" data-page="translator">Live Translator</div>
-    <div class="mobile-link" data-page="learn">Learn A–Z</div>
+    <div class="mobile-link" data-page="learn">Learn A-Z</div>
   </div>
 </nav>
 
 <main>
 
-<!-- ═══ HOME ═══ -->
+<!-- HOME -->
 <section class="page active" id="page-home">
   <div class="hero">
     <div class="hero-bg">
@@ -77,46 +70,44 @@
     </div>
 
     <div class="hero-content">
-      <div class="hero-badge">
+      <div class="hero-badge hero-anim-1">
         <span class="badge-dot"></span>
         Real-time · In-browser · No server required
       </div>
-      <h1 class="hero-title">
+      <h1 class="hero-title hero-anim-2">
         Break<br/>
         <span class="title-accent">Communication</span><br/>
         Barriers
       </h1>
-      <p class="hero-desc">
-        SignVision translates American Sign Language into text and speech
-        -live, in your browser, powered by a trained neural network and MediaPipe hand tracking.
+      <p class="hero-desc hero-anim-3">
+        SignVision translates American Sign Language into text and speech,
+        live in your browser - powered by a trained neural network and MediaPipe hand tracking.
       </p>
-      <div class="hero-actions">
+      <div class="hero-actions hero-anim-4">
         <button class="btn-primary" data-page="translator">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
           Start Translating
         </button>
         <button class="btn-ghost" data-page="learn">
-          Explore A–Z
+          Explore A-Z
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </div>
-      <div class="hero-stats">
+      <div class="hero-stats hero-anim-5">
         <div class="stat"><span class="stat-num">27</span><span class="stat-label">Sign Classes</span></div>
         <div class="stat-div"></div>
-        <div class="stat"><span class="stat-num">40+</span><span class="stat-label">Languages</span></div>
+        <div class="stat"><span class="stat-num">50+</span><span class="stat-label">Languages</span></div>
         <div class="stat-div"></div>
         <div class="stat"><span class="stat-num">0ms</span><span class="stat-label">Server Latency</span></div>
       </div>
     </div>
 
-    <div class="hero-visual">
+    <div class="hero-visual hero-anim-visual">
       <div class="phone-mockup">
         <div class="phone-inner">
           <div class="phone-cam-label"><span class="live-dot"></span>LIVE</div>
           <div class="phone-hand-area">
-
-              <img class="phone-hand-svg" src="assets/hand.png" alt="Hand Sign" width="36" height="36"/>
-
+            <img class="phone-hand-svg" src="assets/hand.png" alt="Hand Sign" width="36" height="36"/>
             <div class="phone-scan-line"></div>
           </div>
           <div class="phone-result">
@@ -127,7 +118,7 @@
         </div>
       </div>
     </div>
-  </div><!-- /.hero -->
+  </div>
 
   <!-- Features -->
   <div class="features-section">
@@ -153,7 +144,7 @@
             <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
           </svg>
         </div>
-        <h3>Learn A–Z</h3>
+        <h3>Learn A-Z</h3>
         <p>Interactive ASL alphabet cards with hand shape diagrams, formation tips, and your full reference chart.</p>
         <span class="feature-link">Explore Signs <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </div>
@@ -164,8 +155,8 @@
           </svg>
         </div>
         <h3>Language Translation</h3>
-        <p>Translate recognized signs into 40+ languages instantly with the integrated translation panel on the Translator page.</p>
-        <span class="feature-tag">Built-in</span>
+        <p>Translate recognized signs into 50+ languages powered by Google Translate. Excellent Indian language support.</p>
+        <span class="feature-tag">Google Translate</span>
       </div>
       <div class="feature-card feature-card-static">
         <div class="feature-icon-wrap">
@@ -186,34 +177,32 @@
     <span class="tech-pill">Keras Neural Network</span>
     <span class="tech-pill">Web Speech API</span>
     <span class="tech-pill">Canvas API</span>
-    <span class="tech-pill">MyMemory Translation</span>
+    <span class="tech-pill">Google Translate</span>
   </div>
-</section><!-- /#page-home -->
+</section>
 
-<!-- ═══ TRANSLATOR ═══ -->
+<!-- TRANSLATOR -->
 <section class="page" id="page-translator">
   <div class="page-header">
     <div class="page-header-inner">
       <h1 class="page-title">Live Translator</h1>
-      <p class="page-sub">Real-time ASL recognition — MediaPipe Hands + Keras model (Dense 42→256→128→27)</p>
+      <p class="page-sub">Real-time ASL recognition - MediaPipe Hands + Keras model (Dense 42-256-128-27)</p>
     </div>
   </div>
 
   <div class="translator-layout">
-
     <!-- Camera Panel -->
     <div class="camera-panel">
       <div class="model-info-bar">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
-        <span><strong>Model active</strong> — asl_recognizer_model.h5 · A–Z + Space · confidence threshold 65% · voting window 8</span>
+        <span><strong>Model active</strong> - asl_recognizer_model.h5 · A-Z + Space · confidence threshold 65% · voting window 8</span>
       </div>
 
       <div class="camera-viewport">
         <video id="videoFeed" autoplay playsinline muted></video>
         <canvas id="overlayCanvas"></canvas>
-
         <div class="camera-idle" id="cameraIdle">
           <div class="cam-idle-graphic">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -224,25 +213,22 @@
           <p>Ready for detection</p>
           <small>Click "Start Detection" and hold your hand in view</small>
         </div>
-
         <div class="camera-overlay-info" id="cameraOverlayInfo" style="display:none">
           <span class="live-badge"><span class="live-dot-sm"></span>LIVE</span>
           <span class="fps-badge" id="fpsBadge">0 fps</span>
         </div>
-
         <div class="loading-overlay" id="loadingOverlay" style="display:none">
           <div class="spinner"></div>
-          <p id="loadingMsg">Initializing MediaPipe…</p>
+          <p id="loadingMsg">Initializing MediaPipe...</p>
         </div>
-
         <div class="no-hand-msg" id="noHandMsg" style="display:none">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          No hand detected — show your hand to the camera
+          No hand detected - show your hand to the camera
         </div>
-      </div><!-- /.camera-viewport -->
+      </div>
 
       <div class="camera-controls">
         <button class="btn-primary" id="btnStartDetection">
@@ -261,20 +247,18 @@
           Snapshot
         </button>
       </div>
-    </div><!-- /.camera-panel -->
+    </div>
 
     <!-- Results Panel -->
     <div class="results-panel">
-
       <div class="result-card">
         <div class="result-header">
           <span class="result-label">Detected Sign</span>
           <span class="result-status" id="resultStatus">Inactive</span>
         </div>
-        <!-- Overflow-safe detected sign box (v6: container-query wrapper) -->
         <div class="result-display-wrap">
           <div class="result-display" id="resultDisplay">
-            <span class="result-placeholder">—</span>
+            <span class="result-placeholder">-</span>
           </div>
         </div>
         <div id="confidenceWrap" style="display:none">
@@ -288,7 +272,6 @@
         </div>
       </div>
 
-      <!-- Dictionary suggestion box -->
       <div class="suggestion-box" id="suggestionBox"></div>
 
       <div class="transcript-card">
@@ -296,24 +279,23 @@
           <span>Session Transcript</span>
         </div>
         <div class="transcript-body" id="transcriptBody">
-          <p class="transcript-empty">Recognized signs will appear here…</p>
+          <p class="transcript-empty">Recognized signs will appear here...</p>
         </div>
-        <!-- Transcript UX controls -->
         <div class="transcript-controls">
-          <button class="tc-btn tc-backspace" id="btnBackspace" title="Remove last letter or selected letter">
+          <button class="tc-btn tc-backspace" id="btnBackspace">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/>
               <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
             </svg>
             Backspace
           </button>
-          <button class="tc-btn" id="btnDeleteWord" title="Remove last word">
+          <button class="tc-btn" id="btnDeleteWord">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/>
             </svg>
             Del Word
           </button>
-          <button class="tc-btn tc-danger" id="btnClearTranscript" title="Clear everything">
+          <button class="tc-btn tc-danger" id="btnClearTranscript">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
@@ -322,7 +304,7 @@
             Clear All
           </button>
         </div>
-      </div><!-- /.transcript-card -->
+      </div>
 
       <div class="action-row">
         <button class="btn-secondary" id="btnSpeakTranscript">
@@ -340,11 +322,10 @@
           Copy
         </button>
       </div>
+    </div>
+  </div>
 
-    </div><!-- /.results-panel -->
-  </div><!-- /.translator-layout -->
-
-  <!-- ── TRANSLATION PANEL ── -->
+  <!-- TRANSLATION PANEL -->
   <div class="translate-panel-wrapper">
     <div class="translate-panel-header">
       <div class="translate-panel-badge">
@@ -354,10 +335,9 @@
         </svg>
         Language Translation
       </div>
-      <p class="translate-panel-sub">Translate recognized signs from English into 40+ world languages — powered by Google Translate</p>
+      <p class="translate-panel-sub">Translate recognized signs from English into 50+ world languages - powered by Google Translate</p>
     </div>
 
-    <!-- TTS warning bar (shown when a language has no native voice) -->
     <div class="tts-warning-bar" id="ttsWarningBar" style="display:none">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/>
@@ -389,7 +369,7 @@
           </div>
         </div>
         <div class="translate-textarea-wrap">
-          <textarea id="translateInput" class="translate-textarea" placeholder="Type or paste text to translate…" rows="5"></textarea>
+          <textarea id="translateInput" class="translate-textarea" placeholder="Type or paste English text to translate..." rows="5"></textarea>
           <div class="translate-char-count"><span id="translateCharCount">0</span> / 5000</div>
         </div>
         <div class="correction-bar" id="correctionBar" style="display:none">
@@ -401,19 +381,19 @@
           <button class="correction-suggestion" id="correctionSuggestion"></button>
         </div>
         <div class="translate-toolbar">
-          <button class="translate-tool-btn" id="btnAutoCorrect" title="Auto-correct text">
+          <button class="translate-tool-btn" id="btnAutoCorrect">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 7h16M4 12h10M4 17h7"/><path d="M17 11l2 2 4-4"/>
             </svg>
             Auto-Correct
           </button>
-          <button class="translate-tool-btn" id="btnClearInput" title="Clear">
+          <button class="translate-tool-btn" id="btnClearInput">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
             Clear
           </button>
-          <button class="translate-tool-btn" id="btnSpeakSource" title="Listen">
+          <button class="translate-tool-btn" id="btnSpeakSource">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <path d="M15.54 8.46a5 5 0 010 7.07"/>
@@ -421,9 +401,9 @@
             Listen
           </button>
         </div>
-      </div><!-- /.translate-source -->
+      </div>
 
-      <!-- Arrow indicator (one-way: English → target) -->
+      <!-- Arrow indicator -->
       <div class="translate-swap-col">
         <div class="translate-arrow-indicator" title="Translating from English">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -436,7 +416,6 @@
       <div class="translate-side translate-target">
         <div class="translate-lang-bar">
           <select id="targetLang" class="lang-select" title="Target language" aria-label="Target language">
-            <!-- ── Indian Languages ── -->
             <optgroup label="Indian Languages">
               <option value="as">Assamese (অসমীয়া)</option>
               <option value="bn">Bengali (বাংলা)</option>
@@ -454,7 +433,6 @@
               <option value="te">Telugu (తెలుగు)</option>
               <option value="ur">Urdu (اردو)</option>
             </optgroup>
-            <!-- ── Other Languages A–Z ── -->
             <optgroup label="Other Languages">
               <option value="af">Afrikaans</option>
               <option value="ar">Arabic</option>
@@ -494,22 +472,22 @@
         </div>
         <div class="translate-output-wrap">
           <div class="translate-output" id="translateOutput">
-            <span class="translate-output-placeholder">Translation will appear here…</span>
+            <span class="translate-output-placeholder">Translation will appear here...</span>
           </div>
           <div class="translate-output-loading" id="translateLoading" style="display:none">
             <div class="translate-dots"><span></span><span></span><span></span></div>
-            <span>Translating…</span>
+            <span>Translating...</span>
           </div>
         </div>
         <div class="translate-toolbar">
-          <button class="translate-tool-btn" id="btnCopyTranslation" title="Copy translation">
+          <button class="translate-tool-btn" id="btnCopyTranslation">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2"/>
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
             </svg>
             Copy
           </button>
-          <button class="translate-tool-btn" id="btnSpeakTranslation" title="Listen">
+          <button class="translate-tool-btn" id="btnSpeakTranslation">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <path d="M15.54 8.46a5 5 0 010 7.07"/>
@@ -517,8 +495,8 @@
             Listen
           </button>
         </div>
-      </div><!-- /.translate-target -->
-    </div><!-- /.translate-panel -->
+      </div>
+    </div>
 
     <div class="translate-btn-row">
       <button class="btn-primary translate-main-btn" id="btnTranslate">
@@ -529,30 +507,28 @@
         Translate
       </button>
     </div>
-  </div><!-- /.translate-panel-wrapper -->
+  </div>
+</section>
 
-</section><!-- /#page-translator -->
-
-<!-- ═══ LEARN ═══ -->
+<!-- LEARN -->
 <section class="page" id="page-learn">
   <div class="page-header">
     <div class="page-header-inner">
-      <h1 class="page-title">Learn A–Z</h1>
-      <p class="page-sub">ASL alphabet reference — hand shape diagrams for all 26 letters</p>
+      <h1 class="page-title">Learn A-Z</h1>
+      <p class="page-sub">ASL alphabet reference - hand shape diagrams for all 26 letters</p>
     </div>
   </div>
-
   <div class="learn-layout">
     <div class="learn-chart">
       <img id="aslChart" src="assets/ASL_Alphabet_Chart.jpg" alt="ASL Alphabet Chart"/>
-      <p class="learn-chart-label">American Sign Language Alphabet · A–Z + Space · 27 model classes</p>
+      <p class="learn-chart-label">American Sign Language Alphabet · A-Z + Space · 27 model classes</p>
     </div>
     <div class="learn-controls">
       <div class="search-wrap">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input class="search-input" type="text" id="learnSearch" placeholder="Search letter or word…"/>
+        <input class="search-input" type="text" id="learnSearch" placeholder="Search letter or word..."/>
       </div>
       <div class="filter-chips">
         <button class="filter-chip active" data-filter="all">All Letters</button>
@@ -562,7 +538,6 @@
     <div class="alphabet-grid" id="alphabetGrid"></div>
   </div>
 
-  <!-- Letter modal -->
   <div class="letter-modal" id="letterModal" style="display:none">
     <div class="letter-modal-backdrop" id="modalBackdrop"></div>
     <div class="letter-modal-card">
@@ -580,12 +555,10 @@
       </div>
     </div>
   </div>
-
-</section><!-- /#page-learn -->
+</section>
 
 </main>
 
-<!-- ═══ FOOTER ═══ -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="nav-logo" style="cursor:default">
@@ -595,7 +568,7 @@
       </span>
     </div>
     <span class="footer-note">
-      In-browser inference · <code>Designed for Deaf & Hard-of-Hearing Users</code> · MediaPipe Hands
+      In-browser inference · <code>Designed for Deaf &amp; Hard-of-Hearing Users</code> · MediaPipe Hands
     </span>
   </div>
 </footer>
