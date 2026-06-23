@@ -8,8 +8,15 @@
  *   Marathi, Gujarati, Kannada, Malayalam, Punjabi, Odia, Assamese, etc.)
  * — Source is always English (en)
  */
+/**
+ * translate.js -- SignVision v7
+ * Translation engine: Google Translate (unofficial client=gtx endpoint)
+ * - No API key required
+ * - Excellent Indian language support
+ * - Source is always English
+ */
 
-// ── Auto-correct dictionary ───────────────────────────────────
+// Auto-correct dictionary
 const CORRECTIONS = {
   'teh':'the','hte':'the','thw':'the','adn':'and','nad':'and',
   'yuo':'you','ot':'to','fo':'of','si':'is','ti':'it','ni':'in',
@@ -36,308 +43,172 @@ const CORRECTIONS = {
   'mornig':'morning','evning':'evening','nigth':'night',
 };
 
-/**
- * autoCorrect(text)
- * Returns { corrected: string, changed: boolean }
- */
 export function autoCorrect(text) {
   if (!text || !text.trim()) return { corrected: text, changed: false };
-
   const tokens = text.split(/([\s]+)/);
-  let changed  = false;
-
+  let changed = false;
   const corrected = tokens.map(token => {
     if (/^\s+$/.test(token)) return token;
     const prefix = token.match(/^[^a-zA-Z']*/)?.[0] || '';
     const suffix = token.match(/[^a-zA-Z']*$/)?.[0] || '';
     const core   = token.slice(prefix.length, token.length - suffix.length || undefined);
     const lower  = core.toLowerCase();
-
     if (CORRECTIONS[lower]) {
       changed = true;
       const r = CORRECTIONS[lower];
-      if (core === core.toUpperCase() && core.length > 1)
-        return prefix + r.toUpperCase() + suffix;
-      if (core[0] === core[0].toUpperCase())
-        return prefix + r.charAt(0).toUpperCase() + r.slice(1) + suffix;
+      if (core === core.toUpperCase() && core.length > 1) return prefix + r.toUpperCase() + suffix;
+      if (core[0] === core[0].toUpperCase()) return prefix + r.charAt(0).toUpperCase() + r.slice(1) + suffix;
       return prefix + r + suffix;
     }
     if (core === 'i') { changed = true; return prefix + 'I' + suffix; }
     return token;
   }).join('');
-
   const finalised = corrected
     .replace(/\s{2,}/g, ' ')
     .replace(/([.!?]\s+)([a-z])/g, (_, p, c) => { changed = true; return p + c.toUpperCase(); })
     .replace(/^([a-z])/, (_, c) => { changed = true; return c.toUpperCase(); });
-
   return { corrected: finalised, changed };
 }
 
-/**
- * suggestCorrection(text)
- * Returns corrected string or null.
- */
 export function suggestCorrection(text) {
   if (!text || text.trim().length < 3) return null;
   const { corrected, changed } = autoCorrect(text);
-  if (!changed) {
-    const words = text.toLowerCase().trim().split(/\s+/);
-    const hasBad = words.some(w => {
-      const c = w.replace(/[^a-z']/g, '');
-      return c.length > 1 && CORRECTIONS[c];
-    });
-    if (!hasBad) return null;
-  }
+  if (!changed) return null;
+  // Only show if something real changed beyond capitalisation
+  if (corrected.toLowerCase() === text.toLowerCase()) return null;
   return corrected !== text ? corrected : null;
 }
 
-// ── Google Translate language code map ───────────────────────
-// Maps our dropdown values → Google Translate language codes.
-// Google uses slightly different codes for some languages.
+// Google Translate language code map
 const GOOGLE_LANG_MAP = {
-  'as':    'as',    // Assamese
-  'af':    'af',    // Afrikaans
-  'ar':    'ar',    // Arabic
-  'bn':    'bn',    // Bengali
-  'zh-CN': 'zh-CN', // Chinese Simplified
-  'zh-TW': 'zh-TW', // Chinese Traditional
-  'cs':    'cs',    // Czech
-  'da':    'da',    // Danish
-  'nl':    'nl',    // Dutch
-  'fil':   'tl',    // Filipino → Tagalog (Google code)
-  'fi':    'fi',    // Finnish
-  'fr':    'fr',    // French
-  'de':    'de',    // German
-  'el':    'el',    // Greek
-  'gu':    'gu',    // Gujarati
-  'he':    'iw',    // Hebrew → Google uses 'iw'
-  'hi':    'hi',    // Hindi
-  'hu':    'hu',    // Hungarian
-  'id':    'id',    // Indonesian
-  'it':    'it',    // Italian
-  'ja':    'ja',    // Japanese
-  'kn':    'kn',    // Kannada
-  'ko':    'ko',    // Korean
-  'la':    'la',    // Latin
-  'ml':    'ml',    // Malayalam
-  'ms':    'ms',    // Malay
-  'mr':    'mr',    // Marathi
-  'mni-Mtei': 'mni-Mtei', // Meitei (Manipuri)
-  'ne':    'ne',    // Nepali
-  'no':    'no',    // Norwegian
-  'or':    'or',    // Odia
-  'fa':    'fa',    // Persian
-  'pl':    'pl',    // Polish
-  'pt':    'pt',    // Portuguese
-  'pa':    'pa',    // Punjabi
-  'ro':    'ro',    // Romanian
-  'ru':    'ru',    // Russian
-  'sa':    'sa',    // Sanskrit
-  'es':    'es',    // Spanish
-  'sw':    'sw',    // Swahili
-  'sv':    'sv',    // Swedish
-  'ta':    'ta',    // Tamil
-  'te':    'te',    // Telugu
-  'th':    'th',    // Thai
-  'tr':    'tr',    // Turkish
-  'uk':    'uk',    // Ukrainian
-  'ur':    'ur',    // Urdu
-  'vi':    'vi',    // Vietnamese
+  'as':'as','af':'af','ar':'ar','bn':'bn',
+  'zh-CN':'zh-CN','zh-TW':'zh-TW','cs':'cs','da':'da','nl':'nl',
+  'fil':'tl','fi':'fi','fr':'fr','de':'de','el':'el',
+  'gu':'gu','he':'iw','hi':'hi','hu':'hu','id':'id',
+  'it':'it','ja':'ja','kn':'kn','ko':'ko','la':'la',
+  'ml':'ml','ms':'ms','mr':'mr','mni-Mtei':'mni-Mtei',
+  'ne':'ne','no':'no','or':'or','fa':'fa','pl':'pl',
+  'pt':'pt','pa':'pa','ro':'ro','ru':'ru','sa':'sa',
+  'es':'es','sw':'sw','sv':'sv','ta':'ta','te':'te',
+  'th':'th','tr':'tr','uk':'uk','ur':'ur','vi':'vi',
 };
 
-/**
- * translateText(text, targetLang)
- * Uses Google Translate unofficial API (client=gtx).
- * Source is always English.
- * Returns { translation: string }
- */
 export async function translateText(text, targetLang) {
   if (!text || !text.trim()) throw new Error('No text to translate');
   if (text.length > 5000) throw new Error('Text exceeds 5000 character limit');
-
   const tgt = GOOGLE_LANG_MAP[targetLang] || targetLang;
   if (tgt === 'en') return { translation: text };
-
-  const encoded = encodeURIComponent(text.trim());
-  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tgt}&dt=t&q=${encoded}`;
-
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tgt}&dt=t&q=${encodeURIComponent(text.trim())}`;
   let res;
-  try {
-    res = await fetch(url);
-  } catch (networkErr) {
-    throw new Error('Network error — please check your connection.');
-  }
-
-  if (!res.ok) {
-    throw new Error(`Translation service returned ${res.status}. Please try again.`);
-  }
-
+  try { res = await fetch(url); } catch { throw new Error('Network error - please check your connection.'); }
+  if (!res.ok) throw new Error(`Translation service returned ${res.status}. Please try again.`);
   let data;
-  try {
-    data = await res.json();
-  } catch {
-    throw new Error('Unexpected response from translation service.');
-  }
-
-  // Google's response: [ [[translatedChunk, originalChunk, ...], ...], ..., sourceLang ]
-  if (!Array.isArray(data) || !Array.isArray(data[0])) {
-    throw new Error('Unexpected response format from Google Translate.');
-  }
-
-  // Each element of data[0] is [translated_segment, original_segment, ...]
-  const translation = data[0]
-    .filter(seg => Array.isArray(seg) && seg[0])
-    .map(seg => seg[0])
-    .join('');
-
+  try { data = await res.json(); } catch { throw new Error('Unexpected response from translation service.'); }
+  if (!Array.isArray(data) || !Array.isArray(data[0])) throw new Error('Unexpected response format.');
+  const translation = data[0].filter(seg => Array.isArray(seg) && seg[0]).map(seg => seg[0]).join('');
   if (!translation) throw new Error('Empty translation response. Please try again.');
   return { translation };
 }
 
-// ── BCP-47 locale map for TTS ─────────────────────────────────
+// TTS locale map
 const LANG_LOCALE_MAP = {
-  'as':    { locale: 'as-IN',  name: 'Assamese',             fallback: 'hi-IN', noNativeVoice: true },
-  'af':    { locale: 'af-ZA',  name: 'Afrikaans' },
-  'ar':    { locale: 'ar-SA',  name: 'Arabic' },
-  'bn':    { locale: 'bn-IN',  name: 'Bengali',              fallback: 'hi-IN' },
-  'zh-CN': { locale: 'zh-CN',  name: 'Chinese (Simplified)' },
-  'zh-TW': { locale: 'zh-TW',  name: 'Chinese (Traditional)' },
-  'cs':    { locale: 'cs-CZ',  name: 'Czech' },
-  'da':    { locale: 'da-DK',  name: 'Danish' },
-  'nl':    { locale: 'nl-NL',  name: 'Dutch' },
-  'fil':   { locale: 'fil-PH', name: 'Filipino',             fallback: 'en-US' },
-  'fi':    { locale: 'fi-FI',  name: 'Finnish' },
-  'fr':    { locale: 'fr-FR',  name: 'French' },
-  'de':    { locale: 'de-DE',  name: 'German' },
-  'el':    { locale: 'el-GR',  name: 'Greek' },
-  'gu':    { locale: 'gu-IN',  name: 'Gujarati',             fallback: 'hi-IN' },
-  'he':    { locale: 'he-IL',  name: 'Hebrew' },
-  'hi':    { locale: 'hi-IN',  name: 'Hindi' },
-  'hu':    { locale: 'hu-HU',  name: 'Hungarian' },
-  'id':    { locale: 'id-ID',  name: 'Indonesian' },
-  'it':    { locale: 'it-IT',  name: 'Italian' },
-  'ja':    { locale: 'ja-JP',  name: 'Japanese' },
-  'kn':    { locale: 'kn-IN',  name: 'Kannada',              fallback: 'hi-IN' },
-  'ko':    { locale: 'ko-KR',  name: 'Korean' },
-  'la':    { locale: 'la',     name: 'Latin',                fallback: 'it-IT' },
-  'ml':    { locale: 'ml-IN',  name: 'Malayalam',            fallback: 'hi-IN' },
-  'ms':    { locale: 'ms-MY',  name: 'Malay',                fallback: 'id-ID' },
-  'mr':    { locale: 'mr-IN',  name: 'Marathi',              fallback: 'hi-IN' },
-  'mni-Mtei': { locale: 'mni-IN', name: 'Meitei (Manipuri)', fallback: 'hi-IN', noNativeVoice: true },
-  'ne':    { locale: 'ne-NP',  name: 'Nepali',               fallback: 'hi-IN' },
-  'no':    { locale: 'nb-NO',  name: 'Norwegian' },
-  'or':    { locale: 'or-IN',  name: 'Odia',                 fallback: 'hi-IN', noNativeVoice: true },
-  'fa':    { locale: 'fa-IR',  name: 'Persian',              fallback: 'ar-SA' },
-  'pl':    { locale: 'pl-PL',  name: 'Polish' },
-  'pt':    { locale: 'pt-PT',  name: 'Portuguese' },
-  'pa':    { locale: 'pa-IN',  name: 'Punjabi',              fallback: 'hi-IN' },
-  'ro':    { locale: 'ro-RO',  name: 'Romanian' },
-  'ru':    { locale: 'ru-RU',  name: 'Russian' },
-  'sa':    { locale: 'sa-IN',  name: 'Sanskrit',             fallback: 'hi-IN', noNativeVoice: true },
-  'es':    { locale: 'es-ES',  name: 'Spanish' },
-  'sw':    { locale: 'sw-KE',  name: 'Swahili',              fallback: 'en-US' },
-  'sv':    { locale: 'sv-SE',  name: 'Swedish' },
-  'ta':    { locale: 'ta-IN',  name: 'Tamil',                fallback: 'hi-IN' },
-  'te':    { locale: 'te-IN',  name: 'Telugu',               fallback: 'hi-IN' },
-  'th':    { locale: 'th-TH',  name: 'Thai' },
-  'tr':    { locale: 'tr-TR',  name: 'Turkish' },
-  'uk':    { locale: 'uk-UA',  name: 'Ukrainian',            fallback: 'ru-RU' },
-  'ur':    { locale: 'ur-PK',  name: 'Urdu',                 fallback: 'ar-SA' },
-  'vi':    { locale: 'vi-VN',  name: 'Vietnamese' },
+  'as':    { locale:'as-IN',  name:'Assamese',          fallback:'hi-IN', noNativeVoice:true },
+  'af':    { locale:'af-ZA',  name:'Afrikaans' },
+  'ar':    { locale:'ar-SA',  name:'Arabic' },
+  'bn':    { locale:'bn-IN',  name:'Bengali',           fallback:'hi-IN' },
+  'zh-CN': { locale:'zh-CN',  name:'Chinese (Simplified)' },
+  'zh-TW': { locale:'zh-TW',  name:'Chinese (Traditional)' },
+  'cs':    { locale:'cs-CZ',  name:'Czech' },
+  'da':    { locale:'da-DK',  name:'Danish' },
+  'nl':    { locale:'nl-NL',  name:'Dutch' },
+  'fil':   { locale:'fil-PH', name:'Filipino',          fallback:'en-US' },
+  'fi':    { locale:'fi-FI',  name:'Finnish' },
+  'fr':    { locale:'fr-FR',  name:'French' },
+  'de':    { locale:'de-DE',  name:'German' },
+  'el':    { locale:'el-GR',  name:'Greek' },
+  'gu':    { locale:'gu-IN',  name:'Gujarati',          fallback:'hi-IN' },
+  'he':    { locale:'he-IL',  name:'Hebrew' },
+  'hi':    { locale:'hi-IN',  name:'Hindi' },
+  'hu':    { locale:'hu-HU',  name:'Hungarian' },
+  'id':    { locale:'id-ID',  name:'Indonesian' },
+  'it':    { locale:'it-IT',  name:'Italian' },
+  'ja':    { locale:'ja-JP',  name:'Japanese' },
+  'kn':    { locale:'kn-IN',  name:'Kannada',           fallback:'hi-IN' },
+  'ko':    { locale:'ko-KR',  name:'Korean' },
+  'la':    { locale:'la',     name:'Latin',             fallback:'it-IT' },
+  'ml':    { locale:'ml-IN',  name:'Malayalam',         fallback:'hi-IN' },
+  'ms':    { locale:'ms-MY',  name:'Malay',             fallback:'id-ID' },
+  'mr':    { locale:'mr-IN',  name:'Marathi',           fallback:'hi-IN' },
+  'mni-Mtei': { locale:'mni-IN', name:'Meitei (Manipuri)', fallback:'hi-IN', noNativeVoice:true },
+  'ne':    { locale:'ne-NP',  name:'Nepali',            fallback:'hi-IN' },
+  'no':    { locale:'nb-NO',  name:'Norwegian' },
+  'or':    { locale:'or-IN',  name:'Odia',              fallback:'hi-IN', noNativeVoice:true },
+  'fa':    { locale:'fa-IR',  name:'Persian',           fallback:'ar-SA' },
+  'pl':    { locale:'pl-PL',  name:'Polish' },
+  'pt':    { locale:'pt-PT',  name:'Portuguese' },
+  'pa':    { locale:'pa-IN',  name:'Punjabi',           fallback:'hi-IN' },
+  'ro':    { locale:'ro-RO',  name:'Romanian' },
+  'ru':    { locale:'ru-RU',  name:'Russian' },
+  'sa':    { locale:'sa-IN',  name:'Sanskrit',          fallback:'hi-IN', noNativeVoice:true },
+  'es':    { locale:'es-ES',  name:'Spanish' },
+  'sw':    { locale:'sw-KE',  name:'Swahili',           fallback:'en-US' },
+  'sv':    { locale:'sv-SE',  name:'Swedish' },
+  'ta':    { locale:'ta-IN',  name:'Tamil',             fallback:'hi-IN' },
+  'te':    { locale:'te-IN',  name:'Telugu',            fallback:'hi-IN' },
+  'th':    { locale:'th-TH',  name:'Thai' },
+  'tr':    { locale:'tr-TR',  name:'Turkish' },
+  'uk':    { locale:'uk-UA',  name:'Ukrainian',         fallback:'ru-RU' },
+  'ur':    { locale:'ur-PK',  name:'Urdu',              fallback:'ar-SA' },
+  'vi':    { locale:'vi-VN',  name:'Vietnamese' },
 };
 
-/**
- * getVoiceForLang(langCode)
- */
 function getVoiceForLang(langCode) {
-  const voices  = window.speechSynthesis?.getVoices() || [];
-  const entry   = LANG_LOCALE_MAP[langCode] || { locale: langCode, name: langCode };
+  const voices = window.speechSynthesis?.getVoices() || [];
+  const entry  = LANG_LOCALE_MAP[langCode] || { locale: langCode, name: langCode };
   const { locale, fallback, name } = entry;
-
   function findVoice(tag) {
     if (!tag) return null;
     const primary = tag.split('-')[0].toLowerCase();
     return voices.find(v => v.lang.toLowerCase() === tag.toLowerCase())
         || voices.find(v => v.lang.toLowerCase().startsWith(primary));
   }
-
   let voice = findVoice(locale);
   if (voice) return { voice, locale, usedFallback: false, langName: name };
-
-  if (fallback) {
-    voice = findVoice(fallback);
-    if (voice) return { voice, locale: fallback, usedFallback: true, langName: name };
-  }
-
+  if (fallback) { voice = findVoice(fallback); if (voice) return { voice, locale: fallback, usedFallback: true, langName: name }; }
   voice = findVoice('en-US') || findVoice('en');
   if (voice) return { voice, locale: 'en-US', usedFallback: true, langName: name };
-
   if (voices.length) return { voice: voices[0], locale: voices[0].lang, usedFallback: true, langName: name };
-
   return null;
 }
 
-/**
- * speakText(text, langCode, onWarning?)
- */
 export function speakText(text, langCode = 'en', onWarning = null) {
-  if (!window.speechSynthesis) {
-    onWarning?.('Text-to-speech is not supported in your browser.');
-    return;
-  }
+  if (!window.speechSynthesis) { onWarning?.('Text-to-speech is not supported in your browser.'); return; }
   if (!text?.trim()) return;
-
   window.speechSynthesis.cancel();
-
   function doSpeak() {
     const result = getVoiceForLang(langCode);
-
-    if (!result) {
-      onWarning?.('No text-to-speech voices are available on this device.');
-      return;
-    }
-
+    if (!result) { onWarning?.('No text-to-speech voices available on this device.'); return; }
     const { voice, usedFallback, langName } = result;
     const entry = LANG_LOCALE_MAP[langCode];
-
-    const utterance    = new SpeechSynthesisUtterance(text);
-    utterance.voice    = voice;
-    utterance.lang     = voice.lang;
-    utterance.rate     = 0.90;
-    utterance.pitch    = 1.0;
-
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = voice; utterance.lang = voice.lang;
+    utterance.rate = 0.90; utterance.pitch = 1.0;
     if (usedFallback && onWarning) {
-      if (entry?.noNativeVoice) {
-        onWarning(`"${langName}" voice is not available in your browser. Speaking with the closest available voice. Install ${langName} TTS in your OS settings for best results.`);
-      } else {
-        onWarning(`"${langName}" voice not found on this device. Using closest available voice.`);
-      }
+      if (entry?.noNativeVoice) onWarning(`"${langName}" voice is not available in your browser. Speaking with closest available voice.`);
+      else onWarning(`"${langName}" voice not found on this device. Using closest available voice.`);
     }
-
     window.speechSynthesis.speak(utterance);
   }
-
   const voices = window.speechSynthesis.getVoices();
   if (voices.length === 0) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      window.speechSynthesis.onvoiceschanged = null;
-      doSpeak();
-    };
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; doSpeak(); };
     setTimeout(doSpeak, 300);
-  } else {
-    doSpeak();
-  }
+  } else { doSpeak(); }
 }
 
-/**
- * initVoices() — call at app start to pre-warm the voice list.
- */
 export function initVoices() {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => {
-    window.speechSynthesis.onvoiceschanged = null;
-    window.speechSynthesis.getVoices();
-  };
+  window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; window.speechSynthesis.getVoices(); };
 }
+
