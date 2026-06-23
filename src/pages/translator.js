@@ -2,6 +2,11 @@
  * translator.js — SignVision v6
  * Live Translator · Transcript UX · Translation Panel · TTS with fallback warning
  */
+/**
+ * translator.js -- SignVision v7
+ * Live Translator - Transcript UX - Translation Panel - TTS
+ * Translation: English -> target language only (Google Translate)
+ */
 
 import { startCamera, stopCamera, captureSnapshot, drawHandSkeleton } from '../utils/camera.js';
 import { predictSign, CONFIDENCE_THRESHOLD }   from '../utils/model.js';
@@ -10,23 +15,18 @@ import { speak }                                from '../utils/speech.js';
 import { autoCorrect, suggestCorrection, translateText, speakText, initVoices } from '../utils/translate.js';
 import { isValidWord, getFuzzySuggestions, getCurrentWord } from '../utils/dictionary.js';
 
-// ─── Module State ─────────────────────────────────────────────
 let prevLandmarks   = null;
 let voter           = createVoter();
-let transcript      = [];        // array of single chars + ' '
-let selectedIndex   = -1;        // chip index selected for deletion
+let transcript      = [];
+let selectedIndex   = -1;
 let frameCount      = 0;
 let fpsTimer        = null;
 let validationTimer = null;
 let correctionTimer = null;
 
-// ─── Init ──────────────────────────────────────────────────────
 export function initTranslatorPage() {
-
-  // Pre-warm TTS voices as early as possible
   initVoices();
 
-  // ── DOM refs ──────────────────────────────────────────────
   const video             = document.getElementById('videoFeed');
   const overlayCanvas     = document.getElementById('overlayCanvas');
   const ctx               = overlayCanvas.getContext('2d');
@@ -47,7 +47,6 @@ export function initTranslatorPage() {
   const suggestionBox     = document.getElementById('suggestionBox');
   const ttsWarningBar     = document.getElementById('ttsWarningBar');
 
-  // ── Canvas resize ──
   function resizeCanvas() {
     overlayCanvas.width  = video.offsetWidth;
     overlayCanvas.height = video.offsetHeight;
@@ -58,9 +57,6 @@ export function initTranslatorPage() {
     return c >= 0.85 ? '#00ff88' : c >= 0.65 ? '#00e5ff' : '#ffb830';
   }
 
-  // ════════════════════════════════════════════════════════════
-  //  TTS WARNING BAR
-  // ════════════════════════════════════════════════════════════
   const ttsWarningMsg = document.getElementById('ttsWarningMsg');
   function showTtsWarning(msg) {
     if (!ttsWarningBar) return;
@@ -68,29 +64,16 @@ export function initTranslatorPage() {
     else ttsWarningBar.textContent = msg;
     ttsWarningBar.style.display = 'flex';
     clearTimeout(ttsWarningBar._timer);
-    ttsWarningBar._timer = setTimeout(() => {
-      ttsWarningBar.style.display = 'none';
-    }, 6000);
+    ttsWarningBar._timer = setTimeout(() => { ttsWarningBar.style.display = 'none'; }, 6000);
   }
-
-  // ════════════════════════════════════════════════════════════
-  //  TRANSCRIPT UX — click-to-select → click-again-to-delete
-  // ════════════════════════════════════════════════════════════
 
   function syncChipIndices() {
-    transcriptBody.querySelectorAll('.transcript-word').forEach((el, i) => {
-      el.dataset.idx = i;
-    });
+    transcriptBody.querySelectorAll('.transcript-word').forEach((el, i) => { el.dataset.idx = i; });
   }
-
   function clearSelection() {
     selectedIndex = -1;
-    transcriptBody.querySelectorAll('.transcript-word.selected').forEach(el => {
-      el.classList.remove('selected');
-      el.title = '';
-    });
+    transcriptBody.querySelectorAll('.transcript-word.selected').forEach(el => { el.classList.remove('selected'); el.title = ''; });
   }
-
   function deleteAtIndex(idx) {
     if (idx < 0 || idx >= transcript.length) return;
     transcript.splice(idx, 1);
@@ -98,109 +81,68 @@ export function initTranslatorPage() {
     rebuildTranscriptDOM();
     updateWordValidation();
   }
-
   function backspaceOne() {
     if (transcript.length === 0) return;
-    // If a chip is selected, delete that specific one
-    if (selectedIndex >= 0) {
-      deleteAtIndex(selectedIndex);
-      return;
-    }
+    if (selectedIndex >= 0) { deleteAtIndex(selectedIndex); return; }
     transcript.pop();
     rebuildTranscriptDOM();
     updateWordValidation();
   }
-
   function deleteLastWord() {
     if (transcript.length === 0) return;
     clearSelection();
     if (transcript[transcript.length - 1] === ' ') transcript.pop();
-    while (transcript.length > 0 && transcript[transcript.length - 1] !== ' ') {
-      transcript.pop();
-    }
+    while (transcript.length > 0 && transcript[transcript.length - 1] !== ' ') transcript.pop();
     rebuildTranscriptDOM();
     updateWordValidation();
   }
-
   function makechip(ch, idx) {
     const chip = document.createElement('span');
     chip.className   = 'transcript-word';
-    chip.textContent = ch === ' ' ? '␣' : ch;
+    chip.textContent = ch === ' ' ? '\u2423' : ch;
     chip.dataset.idx = idx;
-
     chip.addEventListener('click', (e) => {
       e.stopPropagation();
       const i = parseInt(chip.dataset.idx, 10);
-      if (selectedIndex === i) {
-        // Second click → delete
-        deleteAtIndex(i);
-      } else {
-        clearSelection();
-        selectedIndex = i;
-        chip.classList.add('selected');
-        chip.title = 'Click again to delete this letter';
-      }
+      if (selectedIndex === i) { deleteAtIndex(i); }
+      else { clearSelection(); selectedIndex = i; chip.classList.add('selected'); chip.title = 'Click again to delete'; }
     });
     return chip;
   }
-
   function rebuildTranscriptDOM() {
     transcriptBody.innerHTML = '';
     if (transcript.length === 0) {
-      transcriptBody.innerHTML = '<p class="transcript-empty">Recognized signs will appear here…</p>';
+      transcriptBody.innerHTML = '<p class="transcript-empty">Recognized signs will appear here\u2026</p>';
       return;
     }
-    transcript.forEach((ch, idx) => {
-      transcriptBody.appendChild(makechip(ch, idx));
-    });
+    transcript.forEach((ch, idx) => transcriptBody.appendChild(makechip(ch, idx)));
     transcriptBody.scrollTop = transcriptBody.scrollHeight;
   }
-
   function addToTranscript(label) {
     const ch = label === 'SPACE' ? ' ' : label;
     transcript.push(ch);
     clearSelection();
-
     const empty = transcriptBody.querySelector('.transcript-empty');
     if (empty) empty.remove();
-
     const chip = makechip(ch, transcript.length - 1);
     transcriptBody.appendChild(chip);
     transcriptBody.scrollTop = transcriptBody.scrollHeight;
     syncChipIndices();
-
     resultDisplay.classList.add('pop');
     setTimeout(() => resultDisplay.classList.remove('pop'), 150);
-
     updateWordValidation();
   }
-
-  // Click outside chips → clear selection
-  transcriptBody.addEventListener('click', e => {
-    if (!e.target.closest('.transcript-word')) clearSelection();
-  });
-
-  // Keyboard: Backspace/Delete
+  transcriptBody.addEventListener('click', e => { if (!e.target.closest('.transcript-word')) clearSelection(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { clearSelection(); return; }
-    // Only intercept backspace if a chip is actually selected
-    if ((e.key === 'Backspace' || e.key === 'Delete') && selectedIndex >= 0) {
-      e.preventDefault();
-      deleteAtIndex(selectedIndex);
-    }
+    if ((e.key === 'Backspace' || e.key === 'Delete') && selectedIndex >= 0) { e.preventDefault(); deleteAtIndex(selectedIndex); }
   });
 
-  // ── Transcript controls ──
   document.getElementById('btnBackspace').addEventListener('click', () => backspaceOne());
   document.getElementById('btnDeleteWord').addEventListener('click', () => deleteLastWord());
   document.getElementById('btnClearTranscript').addEventListener('click', () => {
-    transcript = [];
-    selectedIndex = -1;
-    voter.reset();
-    prevLandmarks = null;
-    hideSuggestions();
-    clearWordUnderlines();
-    rebuildTranscriptDOM();
+    transcript = []; selectedIndex = -1; voter.reset(); prevLandmarks = null;
+    hideSuggestions(); clearWordUnderlines(); rebuildTranscriptDOM();
   });
   document.getElementById('btnSpeakTranscript').addEventListener('click', () => {
     if (transcript.length) speak(transcript.join(''));
@@ -213,10 +155,6 @@ export function initTranslatorPage() {
       setTimeout(() => { btn.innerHTML = orig; }, 2000);
     });
   });
-
-  // ════════════════════════════════════════════════════════════
-  //  WORD VALIDATION & DICTIONARY SUGGESTIONS
-  // ════════════════════════════════════════════════════════════
 
   function updateWordValidation() {
     clearTimeout(validationTimer);
@@ -231,22 +169,16 @@ export function initTranslatorPage() {
       else hideSuggestions();
     }, 350);
   }
-
   function markInvalidWord(wordLen) {
     const chips = Array.from(transcriptBody.querySelectorAll('.transcript-word'));
     let rem = wordLen;
     for (let i = chips.length - 1; i >= 0 && rem > 0; i--) {
-      if (chips[i].textContent === '␣') break;
-      chips[i].classList.add('word-invalid');
-      rem--;
+      if (chips[i].textContent === '\u2423') break;
+      chips[i].classList.add('word-invalid'); rem--;
     }
   }
-
-  function clearWordUnderlines() {
-    transcriptBody.querySelectorAll('.word-invalid').forEach(c => c.classList.remove('word-invalid'));
-  }
-
-  function showSuggestions(suggestions, original) {
+  function clearWordUnderlines() { transcriptBody.querySelectorAll('.word-invalid').forEach(c => c.classList.remove('word-invalid')); }
+  function showSuggestions(suggestions) {
     suggestionBox.innerHTML = `
       <span class="sugg-label">Did you mean:</span>
       ${suggestions.map(s => `<button class="sugg-chip" data-word="${s}">${s}</button>`).join('')}
@@ -257,75 +189,54 @@ export function initTranslatorPage() {
       </button>`;
     suggestionBox.classList.add('visible');
     suggestionBox.querySelectorAll('.sugg-chip').forEach(btn => {
-      btn.addEventListener('click', () => {
-        replaceCurrentWord(btn.dataset.word);
-        hideSuggestions();
-        clearWordUnderlines();
-      });
+      btn.addEventListener('click', () => { replaceCurrentWord(btn.dataset.word); hideSuggestions(); clearWordUnderlines(); });
     });
     suggestionBox.querySelector('.sugg-dismiss').addEventListener('click', hideSuggestions);
   }
-
   function hideSuggestions() { suggestionBox.classList.remove('visible'); }
-
   function replaceCurrentWord(replacement) {
     while (transcript.length > 0 && transcript[transcript.length - 1] !== ' ') transcript.pop();
     replacement.toUpperCase().split('').forEach(ch => transcript.push(ch));
     rebuildTranscriptDOM();
   }
 
-  // ════════════════════════════════════════════════════════════
-  //  MEDIAPIPE + MODEL
-  // ════════════════════════════════════════════════════════════
-
   function onHandResults(results) {
     frameCount++;
     resizeCanvas();
     ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
     if (!results.multiHandLandmarks?.length) {
       noHandMsg.style.display      = 'block';
-      resultDisplay.innerHTML      = '<span class="result-placeholder">—</span>';
+      resultDisplay.innerHTML      = '<span class="result-placeholder">-</span>';
       confidenceWrap.style.display = 'none';
       resultStatus.textContent     = 'No hand detected';
       resultStatus.className       = 'result-status';
-      prevLandmarks = null;
-      return;
+      prevLandmarks = null; return;
     }
-
     noHandMsg.style.display = 'none';
     const landmarks  = results.multiHandLandmarks[0];
     const handedness = results.multiHandedness[0].label;
-
     const { label, confidence, smoothedLandmarks } = predictSign(landmarks, handedness, prevLandmarks);
     prevLandmarks = smoothedLandmarks;
-
     const color = confColor(confidence);
     drawHandSkeleton(ctx, landmarks, overlayCanvas.width, overlayCanvas.height, color);
-
-    // ── FIX: show "SPACE" without overflow ──
     resultDisplay.textContent = label === 'SPACE' ? 'SPACE' : label;
     resultDisplay.style.color = confidence >= CONFIDENCE_THRESHOLD ? color : 'var(--text-4)';
-
     confidenceWrap.style.display = 'block';
     const pct = Math.round(confidence * 100);
-    confidenceValue.textContent  = `${pct}%${confidence < CONFIDENCE_THRESHOLD ? ' (low)' : ''}`;
-    confidenceFill.style.width   = `${pct}%`;
-
+    confidenceValue.textContent = `${pct}%${confidence < CONFIDENCE_THRESHOLD ? ' (low)' : ''}`;
+    confidenceFill.style.width  = `${pct}%`;
     if (confidence >= CONFIDENCE_THRESHOLD) {
-      resultStatus.textContent = 'Detecting';
-      resultStatus.className   = 'result-status active';
+      resultStatus.textContent = 'Detecting'; resultStatus.className = 'result-status active';
       const committed = voter.vote(label);
       if (committed) addToTranscript(committed);
     } else {
-      resultStatus.textContent = 'Low confidence';
-      resultStatus.className   = 'result-status';
+      resultStatus.textContent = 'Low confidence'; resultStatus.className = 'result-status';
     }
   }
 
   btnStart.addEventListener('click', async () => {
-    btnStart.disabled      = true;
-    loadingMsg.textContent = 'Initializing MediaPipe Hands…';
+    btnStart.disabled = true;
+    loadingMsg.textContent = 'Initializing MediaPipe Hands...';
     loadingOverlay.style.display = 'flex';
     try {
       await startCamera(video, onHandResults);
@@ -333,48 +244,37 @@ export function initTranslatorPage() {
       cameraIdle.style.display        = 'none';
       cameraOverlayInfo.style.display = 'flex';
       btnStop.disabled = false;
-      resultStatus.textContent = 'Ready — show your hand';
+      resultStatus.textContent = 'Ready - show your hand';
       resultStatus.className   = 'result-status active';
       fpsTimer = setInterval(() => { fpsBadge.textContent = `${frameCount} fps`; frameCount = 0; }, 1000);
     } catch (err) {
       loadingOverlay.style.display = 'none';
       btnStart.disabled = false;
-      alert('Could not start camera.\n\n• Use a local web server (not file://)\n• Allow camera permissions\n\nError: ' + err.message);
+      alert('Could not start camera.\n\nUse a local web server (not file://)\nAllow camera permissions\n\nError: ' + err.message);
     }
   });
 
   btnStop.addEventListener('click', () => {
-    stopCamera();
-    clearInterval(fpsTimer);
-    voter.reset();
-    prevLandmarks = null;
-    hideSuggestions();
-    clearWordUnderlines();
-    clearSelection();
-    cameraIdle.style.display        = 'flex';
-    cameraOverlayInfo.style.display = 'none';
-    noHandMsg.style.display         = 'none';
-    btnStart.disabled = false;
-    btnStop.disabled  = true;
+    stopCamera(); clearInterval(fpsTimer); voter.reset(); prevLandmarks = null;
+    hideSuggestions(); clearWordUnderlines(); clearSelection();
+    cameraIdle.style.display = 'flex'; cameraOverlayInfo.style.display = 'none';
+    noHandMsg.style.display  = 'none';
+    btnStart.disabled = false; btnStop.disabled = true;
     ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-    resultDisplay.innerHTML      = '<span class="result-placeholder">—</span>';
+    resultDisplay.innerHTML      = '<span class="result-placeholder">-</span>';
     confidenceWrap.style.display = 'none';
-    resultStatus.textContent     = 'Inactive';
-    resultStatus.className       = 'result-status';
+    resultStatus.textContent     = 'Inactive'; resultStatus.className = 'result-status';
   });
 
   document.getElementById('btnSnapshot').addEventListener('click', () => {
     if (!video.srcObject) return;
-    const a    = document.createElement('a');
+    const a = document.createElement('a');
     a.href     = captureSnapshot(video);
     a.download = `signvision-${Date.now()}.png`;
     a.click();
   });
 
-  // ════════════════════════════════════════════════════════════
-  //  TRANSLATION PANEL
-  // ════════════════════════════════════════════════════════════
-
+  // Translation Panel
   const translateInput     = document.getElementById('translateInput');
   const translateOutput    = document.getElementById('translateOutput');
   const translateCharCount = document.getElementById('translateCharCount');
@@ -384,21 +284,17 @@ export function initTranslatorPage() {
   const targetLang         = document.getElementById('targetLang');
   let currentTranslation   = '';
 
-  // Char counter + "Did you mean?" detection
   translateInput.addEventListener('input', () => {
     const len = Math.min(translateInput.value.length, 5000);
     if (translateInput.value.length > 5000) translateInput.value = translateInput.value.slice(0, 5000);
     translateCharCount.textContent = len;
-
     clearTimeout(correctionTimer);
     correctionTimer = setTimeout(() => {
       const sugg = suggestCorrection(translateInput.value);
       if (sugg && sugg !== translateInput.value) {
         correctionSuggEl.textContent = sugg;
         correctionBar.style.display  = 'flex';
-      } else {
-        correctionBar.style.display = 'none';
-      }
+      } else { correctionBar.style.display = 'none'; }
     }, 600);
   });
 
@@ -412,7 +308,7 @@ export function initTranslatorPage() {
   document.getElementById('btnPasteTranscript').addEventListener('click', () => {
     if (transcript.length === 0) {
       const ph = translateInput.placeholder;
-      translateInput.placeholder = 'No transcript yet — start detection first';
+      translateInput.placeholder = 'No transcript yet - start detection first';
       setTimeout(() => { translateInput.placeholder = ph; }, 2500);
       return;
     }
@@ -440,28 +336,25 @@ export function initTranslatorPage() {
     translateInput.value           = '';
     translateCharCount.textContent = '0';
     correctionBar.style.display    = 'none';
-    translateOutput.innerHTML      = '<span class="translate-output-placeholder">Translation will appear here…</span>';
+    translateOutput.innerHTML      = '<span class="translate-output-placeholder">Translation will appear here...</span>';
     currentTranslation             = '';
   });
 
-  // Speak source text (always English)
+  // Speak source (always English)
   document.getElementById('btnSpeakSource').addEventListener('click', () => {
     const text = translateInput.value.trim();
     if (!text) return;
     speakText(text, 'en', showTtsWarning);
   });
 
-  // Swap button removed — source is always English
-
-  // Translate (always from English)
+  // Translate - always from English
   async function doTranslate() {
     const text = translateInput.value.trim();
     if (!text) {
-      translateOutput.innerHTML = '<span class="translate-output-placeholder">Enter some text first…</span>';
+      translateOutput.innerHTML = '<span class="translate-output-placeholder">Enter some text first...</span>';
       return;
     }
     const tgt = targetLang.value;
-
     translateLoading.style.display = 'flex';
     translateOutput.style.opacity  = '0.3';
     try {
@@ -487,7 +380,6 @@ export function initTranslatorPage() {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doTranslate(); }
   });
 
-  // Copy translation
   document.getElementById('btnCopyTranslation').addEventListener('click', () => {
     if (!currentTranslation) return;
     const btn = document.getElementById('btnCopyTranslation');
@@ -499,7 +391,6 @@ export function initTranslatorPage() {
     });
   });
 
-  // Speak translation — with TTS warning for unsupported languages
   document.getElementById('btnSpeakTranslation').addEventListener('click', () => {
     if (!currentTranslation) return;
     speakText(currentTranslation, targetLang.value, showTtsWarning);
