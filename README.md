@@ -5,6 +5,18 @@ Powered by a trained Keras neural network (run entirely client-side) and MediaPi
 
 ---
 
+## Live Demo
+
+**🔗 [Open Live Website](https://cutt.ly/itNKhwgm)**
+
+_or click the preview below._
+
+<p align="center">
+  <a href="https://cutt.ly/itNKhwgm" target="_blank">
+    <img src="./assets/hero-demo.webp" alt="Website Demo" width="900">
+  </a>
+</p>
+
 ## What's new in v7
 
 - **Full mobile responsiveness** - Comprehensive responsive design across all pages and screen sizes (phones, tablets, laptops, desktops). Five breakpoints: 1100px, 960px, 768px, 640px, 390px. Hero text scales down cleanly at 24px on mobile with no overflow. Stats section uses a 3-column grid on small screens. Phone mockup moves below the stats row on mobile instead of being hidden.
